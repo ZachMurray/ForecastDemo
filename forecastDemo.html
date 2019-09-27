@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <title>CFR - Calculator For Retirement</title>
+        <meta name="description" content="Based on general financial trends." />
+        <script src="https://code.jquery.com/jquery-3.4.1.js"></script>
+        <script
+            type="text/javascript">$(function () { $.get("assets/head.html", function (data) { $("head").prepend(data); }); });</script>
+
+        <style>
+            .btn {
+            background-color: DodgerBlue;
+            border: none;
+            color: white;
+            padding: 12px 12px;
+            cursor: pointer;
+            font-size: 20px;
+            }
+
+            /* Darker background on mouse-over */
+            .btn:hover {
+            background-color: RoyalBlue;
+            }
+        </style>
+    </head>
+
+    <body class="">
+
+        <header></header>
+
+        <div class="message">
+            <div class="text">
+                <h1> Hello Revel, </h1><br />
+                <h2> Welcome To The Acme Forecast! </h2><br />
+            </div>
+            <div>
+                <!-- <h3> The best time to engage a customer via: </h3>
+                <h3 id="engageVia"> Any Way You Like - It's always good to engage. </h3> -->
+            </div>
+        </div>
+        <div class="buttonsList">
+            <button class="btn" onclick="refreshForecastData()"> Refresh Forecast Data </button>
+            <!-- <button class="btn" onclick="downloadForecastData()"> Download Forecast Data </button> -->
+        </div>
+        <ul id="forecast-data-list"></ul>
+        <textarea name="forecast-data-raw" id="forecast-data" cols="30" rows="10"> Data Not Found. </textarea>
+    </body>
+    
+    <script> 
+        function refreshForecastData() {
+            var request = new XMLHttpRequest()
+            var text;
+            var parser = new DOMParser(); 
+            var xmlDoc;
+            
+            // Open a new connection, using the GET request on the URL endpoint
+            request.open('GET', 'https://api.openweathermap.org/data/2.5/forecast?q=minneapolis,us&mode=xml&units=imperial&APPID=19069cbe46698679d496acf50cbcb381', true)
+            request.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                    text = this.responseText; 
+                    document.getElementById("forecast-data").innerHTML = text; 
+                    text2 = text.split("</time>")
+                    for (i=0, len = text2.length, text3 = []; i < len; i++) {
+                        if (text2[i].includes("<time ")) {
+                            text3.push(text2[i].split("<time ")[1]);
+                        }
+                    }
+                    // console.log(text3); 
+                    for (i=0, len = text3.length, text4 = []; i < len; i++) {
+                        datetimeStart = text3[i].split("from=\"")[1].split("\" to=")[0].replace("T", " ")
+                        datetimeEnd = text3[i].split("\" to=\"")[1].split("\">")[0].replace("T", " ")
+                        temperature = text3[i].split("<temperature unit=\"fahrenheit\" value=\"")[1].split("\" min=")[0]
+                        var node = document.createElement("LI");
+                        if (temperature > 75) {
+                            if (text3.includes("clouds value=\"clear sky")) {
+                                var textnode = document.createTextNode("Text Message, from " + datetimeStart + " to " + datetimeEnd + ", because it's above 75 F and Sunny.");
+                            } 
+                        } else if (temperature >= 55) { 
+                            var textnode = document.createTextNode("Email,  from " + datetimeStart + " to " + datetimeEnd + ", because it's below between 55-75 F.");
+                        } else if (temperature < 55) {
+                            var textnode = document.createTextNode("Phone Call, from " + datetimeStart + " to " + datetimeEnd + ", because it's below 55 F.");
+                        } else if (text3.includes("clouds value =\"raining")) {
+                            var textnode = document.createTextNode("Phone Call, from " + datetimeStart + " to " + datetimeEnd + ", because it's Raining.");
+                        }
+                        console.log(textnode.nodeValue)
+                        if (textnode.nodeValue.trim().length !== 0) {
+                            node.appendChild(textnode);
+                            document.getElementById("forecast-data-list").appendChild(node);
+                        }
+                    }
+                }
+            }
+            request.send()
+        }
+    </script>
+    <script src="assets/js/set-background.js"></script>
+</html>
